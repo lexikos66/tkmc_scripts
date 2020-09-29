@@ -1,0 +1,755 @@
+
+<------------- PHP Sample Code ----------------------->
+<?php
+/* Set e-mail recipient */
+$myemail  = "you@domain.com";
+
+/* Check all form inputs using check_input function */
+$yourname = check_input($_POST['yourname'], "Enter your name");
+$subject  = check_input($_POST['subject'], "Write a subject");
+$email    = check_input($_POST['email']);
+$website  = check_input($_POST['website']);
+$likeit   = check_input($_POST['likeit']);
+$how_find = check_input($_POST['how']);
+$comments = check_input($_POST['comments'], "Write your comments");
+
+/* If e-mail is not valid show error message */
+if (!preg_match("/([\w\-]+\@[\w\-]+\.[\w\-]+)/", $email))
+{
+    show_error("E-mail address not valid");
+}
+
+/* If URL is not valid set $website to empty */
+if (!preg_match("/^(https?:\/\/+[\w\-]+\.[\w\-]+)/i", $website))
+{
+    $website = '';
+}
+
+/* Let's prepare the message for the e-mail */
+$message = "Hello!
+
+Your contact form has been submitted by:
+
+Name: $yourname
+E-mail: $email
+URL: $website
+
+Like the website? $likeit
+How did he/she find it? $how_find
+
+Comments:
+$comments
+
+End of message
+";
+
+/* Send the message using mail() function */
+mail($myemail, $subject, $message);
+
+/* Redirect visitor to the thank you page */
+header('Location: thanks.htm');
+exit();
+
+/* Functions we used */
+function check_input($data, $problem='')
+{
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    if ($problem && strlen($data) == 0)
+    {
+        show_error($problem);
+    }
+    return $data;
+}
+
+function show_error($myError)
+{
+?>
+    <html>
+    <body>
+
+    <b>Please correct the following error:</b><br />
+    <?php echo $myError; ?>
+
+    </body>
+    </html>
+<?php
+exit();
+}
+?>
+
+<---------- Individual Mile Log Form --------------->
+
+<form action="http://templarknightsmc.com/memberservices/mileslogged.htm" method="get">
+<p>Find Rides and Miles Logged For:
+<select name="searchFor">
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $ktable='knight_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+  
+  $query = 'SELECT * FROM ' . $ktable . ' ORDER BY LODGE, NICKNAME';
+  $result = mysql_query($query);
+  if($result) {
+    echo '<option value="BLANK"> ---Select--- </option>';
+    while($row = mysql_fetch_array($result)) {
+      if($row[DATE_WITHDREW] == '0000-00-00') {
+        if($row[NICKNAME] == "") {
+          echo '<option value="' . $row[RECORD_NUM] . '">' . $row[FNAME] . ' ' . $row[LNAME] . '</option>';
+        }
+        else {
+          echo '<option value="' . $row[RECORD_NUM] . '">' . $row[NICKNAME] . '</option>';  
+        }
+      }
+    }
+  }
+  mysql_close();
+?> 
+</select>
+</p>
+<p><input type="submit" value="Find Rides!"></p>
+</form>
+
+<---------- Ride Tracker Form ----------->
+<?php
+  $extrastuff =  '<table><tr><td>' . $_GET["lodgeNumber"] . '</td></tr></table>';
+  if(isset($_GET["lodgeNumber"])) {
+?>
+<form action="addride.php" method="post" style="width:600px;">
+<div style="height:709px;width:735px;overflow-x:hidden;overflow-y:scroll;">
+<font size="2">Items marked with a </font><font size="2" color="red">*</font><font size="2"> are required fields.</font><br><br>
+<p>Name the Ride (Where did you go) <font color="red" size="2">*</font>: <input type="text" name="rideName" /><br>
+<p>Sponsoring Lodge <font color="red" size="2">*</font>:
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $usertable='lodge_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+  
+  $extrastuff =  '<table><tr><td>' . $_GET["lodgeNumber"] . '</td></tr></table>';
+  $query = 'SELECT * FROM ' . $usertable . ' WHERE LODGE_NUM = ' . $_GET["lodgeNumber"];
+  $result = mysql_query($query);
+  if($result) {
+    while($row = mysql_fetch_array($result)){
+      $lodgeName = $row[LODGE_NAME];  
+    }
+  }
+  echo '&nbsp&nbsp' . $lodgeName;
+  echo '<input type="hidden" name="lodgeNum" value="' . $_GET["lodgeNumber"] . '">';
+?>
+</p>
+Date of Ride (yyyy-mm-dd) <font color="red" size="2">*</font>: <input type="text" name="rideDate" /><br>
+Miles Ridden <font color="red" size="2">*</font>: <input type="text" name="rideMiles" /><br>
+Hours Ridden: <input type="text" name="rideHours" /><br>
+<p>Ride Organizer <font color="red" size="2">*</font>:
+<select name="rideOrganizer">
+<?php
+  $usertable='knight_directory';
+  $extrastuff =  '<table><tr><td>' . $_GET["lodgeNumber"] . '</td></tr></table>';
+  $query = 'SELECT * FROM ' . $usertable . ' WHERE LODGE = ' . $_GET["lodgeNumber"] . ' ORDER BY NICKNAME';
+  $result = mysql_query($query);
+    if($result) {
+      echo '<option value="BLANK"> ---Select--- </option>';
+      while($row = mysql_fetch_array($result)) {
+        if($row[DATE_WITHDREW] == '0000-00-00') {
+          if($row[NICKNAME] == "") {
+            echo '<option value="' . $row[RECORD_NUM] . '">' . $row[FNAME] . ' ' . $row[LNAME] . '</option>';
+          }
+          else {
+            echo '<option value="' . $row[RECORD_NUM] . '">' . $row[NICKNAME] . '</option>';  
+          }
+        }
+      }
+    }
+?> 
+</select>
+</p>
+<p>Ride Participants <font color="red" size="2">*</font>:<br>
+<?php
+  $usertable='knight_directory';
+  $extrastuff =  '<table><tr><td>' . $_GET["lodgeNumber"] . '</td></tr></table>';
+  $query = 'SELECT * FROM ' . $usertable . ' WHERE LODGE = ' . $_GET["lodgeNumber"] . ' ORDER BY NICKNAME';
+  $result = mysql_query($query);
+  if($result) {
+    echo '<input type="checkbox" name="rideParticipants[]" value="NONE" style="display:none;" />';
+    echo '<table border="0"><tr>';
+    $i=1;
+    while($row = mysql_fetch_array($result)){
+      if($row[DATE_WITHDREW] == '0000-00-00') {
+        if($row[NICKNAME] == "") {
+          echo '<td><input type="checkbox" name="rideParticipants[]" value="' . $row[RECORD_NUM] . '" /> ' . $row[FNAME] . ' ' . $row[LNAME] . '&nbsp;&nbsp</td>';
+        }
+        else {
+          echo '<td><input type="checkbox" name="rideParticipants[]" value="' . $row[RECORD_NUM] . '" /> ' . $row[NICKNAME] . '&nbsp;&nbsp;</td>';  
+        }
+        if($i/5 == 1) {
+          echo '</tr><tr>';
+          $i=0;
+        }
+        $i++;
+      }
+    }
+    echo '</table> ';
+  }
+  mysql_close();
+?> 
+</p>
+<p>Please provide a description or a Googlemap URL of the Route <font color="red" size="2">*</font>:<br>
+<textarea name="routeDetails" rows="2" cols="60"></textarea></p>
+<p>Road and Weather Conditions:<br>
+<textarea name="conditions" rows="2" cols="60"></textarea></p>
+<p>Please provide a detailed description of Safety Hazard or Issues Noticed <font color="red" size="2">*</font>:<br>
+<textarea name="safetyIssues" rows="5" cols="60"></textarea></p>
+<p>Please provide a summary of the ride details <font color="red" size="2">*</font>:<br>
+<textarea name="rideSummary" rows="5" cols="60"></textarea></p>
+<p>If you interacted with the Public or any other Club, how were you recieved?<br>
+<textarea name="perception" rows="2" cols="60"></textarea></p>
+<p>Was this a Charity Ride?
+<input type="radio" name="isCharity" value="1" /> Yes
+<input type="radio" name="isCharity" value="0" checked="checked"/> No
+</p>
+<p><input type="submit" value="Record Ride"></p>
+</div>
+</form>
+
+<?php
+}
+else {
+  echo '<form action="http://templarknightsmc.com/memberservices/rides.htm" method="get">';
+  echo '<p>Sponsoring Lodge <font color="red" size="2">*</font>:';
+  echo '<select name="lodgeNumber">';
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $usertable='lodge_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+  $query = 'SELECT * FROM ' . $usertable . ' ORDER BY LODGE_NAME';
+  $result = mysql_query($query);
+  if($result) {
+    while($row = mysql_fetch_array($result)){
+      echo '<option value="' . $row[LODGE_NUM] . '">' . $row[LODGE_NAME] . '</option>';  
+    }
+  }
+  mysql_close();
+  echo '</select>';
+  echo '<p><input type="submit" value="Select Lodge"></p>';
+  echo '</form>';
+}
+?>
+
+<---------- Directory Form --------------->
+
+<form action="http://templarknightsmc.com/memberservices/dirresults.htm" method="get">
+<p>Search by Name:
+<select name="searchBy">
+  <option value="BLANK">Select . . . </option>
+  <option value="FNAME">First Name</option>
+  <option value="LNAME">Last Name</option>
+  <option value="NICKNAME">Nickname</option>
+</select>
+</p>
+Name: <input type="text" name="searchName"/><br><br>
+OR<br><br>
+<p>Search by Lodge:
+<select name="lodgeNum">
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $ltable='lodge_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+  $query = 'SELECT * FROM ' . $ltable . ' ORDER BY LODGE_NAME';
+  $result = mysql_query($query);
+  if($result) {
+    while($row = mysql_fetch_array($result)){
+      echo '<option value="' . $row[LODGE_NUM] . '">' . $row[LODGE_NAME] . '</option>';  
+    }
+  }
+  mysql_close();
+?> 
+</select>
+</p>
+<p><input type="submit" value="Search!"></p>
+</form>
+
+<---------- Add Knight Form Message --------------->
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $ktable='knight_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+
+  echo '<form action="http://templarknightsmc.com/memberservices/knightupdate.htm" method="get">';
+  if(isset($_GET["success"])) {
+    $query = 'SELECT * FROM ' . $ktable . ' WHERE RECORD_NUM = ' . $_GET["recordNum"];
+    $result = mysql_query($query);
+    if($result) {
+      $row = mysql_fetch_array($result);
+      echo '<table><tr><td><font size="4">You successfully added ' . $row[FNAME] . ' ' . $row[LNAME] . '.</font></td></tr></table>';
+    }
+  }
+  
+  echo '</form>';
+  mysql_close();
+?> 
+
+
+<---------- Add Knight Form --------------->
+
+<form action="addknight.php" method="post">
+TKMC Membership Number: <input type="text" name="tkmcNum" /><br><br>
+First Name: <input type="text" name="firstName" /><br>
+Last Name: <input type="text" name="lastName" /><br>
+Birth Date: <input type="text" name="birthDate" /><br>
+Nickname: <input type="text" name="nickName" /><br>
+<p>Rank:<br>
+<select name="rank">
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $usertable='knight_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+  $query = "SHOW COLUMNS FROM " . $usertable . " LIKE 'RANK'";
+  $result = mysql_query($query);
+  if($result) {
+    $row = mysql_fetch_array($result);
+    #Extract the values
+    #The values are enclosed in single quotes and seperated by commas
+    $regex = "/'(.*?)'/";
+    preg_match_all($regex, $row[1], $enum_array);
+    $i = 0;
+    foreach($enum_array[1] as $value) {
+      if($i == 2) {
+        echo '<option selected="yes" value="' . $i . '">' . $value . '</option>';
+      }
+      else {
+        echo '<option value="' . $i . '">' . $value . '</option>';
+      }
+      $i++;
+    }
+  }
+?> 
+</select>
+</p>
+Street Address: <input type="text" name="streetAddress" /><br>
+City: <input type="text" name="city" /><br>
+<p>State:
+<select name="state">
+<?php
+$usertable='state_directory';
+$query = 'SELECT * FROM ' . $usertable;
+$stateresult = mysql_query($query);
+  if($stateresult) {
+    while($staterow = mysql_fetch_array($stateresult)){
+      if($staterow[STATE_NUM] == $row[STATE]) {
+        echo '<option selected="yes" value="' . $staterow[STATE_NUM] . '">' . $staterow[STATE_NAME] . '</option>';
+      }
+      else {
+        echo '<option value="' . $staterow[STATE_NUM] . '">' . $staterow[STATE_NAME] . '</option>';
+      }
+    }
+  }
+?>
+</select></p>
+Zip Code: <input type="text" name="zipCode" /><br>
+<p>Country:
+<select name="country">
+<?php
+$usertable='country_directory';
+$query = 'SELECT * FROM ' . $usertable;
+$countryresult = mysql_query($query);
+if($countryresult) {
+  while($countryrow = mysql_fetch_array($countryresult)){
+    if($countryrow[COUNTRY_NUM] == $row[COUNTRY]) {
+      echo '<option selected="yes" value="' . $countryrow[COUNTRY_NUM] . '">' . $countryrow[COUNTRY_NAME] . '</option>';
+    }
+    else {
+      echo '<option value="' . $countryrow[COUNTRY_NUM] . '">' . $countryrow[COUNTRY_NAME] . '</option>';
+    }
+  }
+}
+?>
+</select></p>
+Phone (no dashes): <input type="text" name="phoneNum" /><br>
+Email Address: <input type="text" name="emailAddr" /><br>
+<p>Lodge:
+<select name="lodgeNum">
+<?php
+  $usertable='lodge_directory';
+  $query = 'SELECT * FROM ' . $usertable;
+  $result = mysql_query($query);
+  if($result) {
+    while($row = mysql_fetch_array($result)){
+      echo '<option value="' . $row[LODGE_NUM] . '">' . $row[LODGE_NAME] . '</option>';  
+    }
+  }
+?> 
+</select>
+</p>
+Referred by (use nickname if posible): <input type="text" name="referredBy" /><br>
+<p>Mentor:
+<select name="mentor">
+<?php
+  $usertable='knight_directory';
+  $query = 'SELECT * FROM ' . $usertable . ' ORDER BY LODGE, NICKNAME';
+  $result = mysql_query($query);
+    if($result) {
+      echo '<option value="BLANK"> ---Select--- </option>';
+      while($row = mysql_fetch_array($result)) {
+        if($row[DATE_WITHDREW] == '0000-00-00') {
+          if($row[NICKNAME] == "") {
+            echo '<option value="' . $row[RECORD_NUM] . '">' . $row[FNAME] . ' ' . $row[LNAME] . '</option>';
+          }
+          else {
+            echo '<option value="' . $row[RECORD_NUM] . '">' . $row[NICKNAME] . '</option>';  
+          }
+        }
+      }
+    }
+  mysql_close();
+?> 
+</select>
+</p>
+Date Joined (yyyy-mm-dd): <input type="text" name="dateJoined" /><br>
+Date Approved (yyyy-mm-dd): <input type="text" name="dateApproved" /><br>
+Date Knighted (yyyy-mm-dd): <input type="text" name="dateKnighted" /><br>
+<p>Notes:<br>
+<textarea name="notes" rows="10" cols="40"></textarea></p>
+<p><input type="submit" value="Create Record"></p>
+</form>
+
+<---------- Update DB Select Individual Form --------------->
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $ktable='knight_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+
+  echo '<form action="http://templarknightsmc.com/councilservices/updateknight.htm" method="get">';
+  if(isset($_GET["searchFor"])) {
+    $query = 'SELECT * FROM ' . $ktable . ' WHERE RECORD_NUM = ' . $_GET["searchFor"];
+    $result = mysql_query($query);
+    if($result) {
+      $row = mysql_fetch_array($result);
+      echo '<table><tr><td><font size="4">You are modifying ' . $row[FNAME] . ' ' . $row[LNAME] . '.</font><br>To update another person, select them from the list below:<br><br></td></tr></table>';
+    }
+  }
+  
+  if(isset($_GET["success"])) {
+    $query = 'SELECT * FROM ' . $ktable . ' WHERE RECORD_NUM = ' . $_GET["recordNum"];
+    $result = mysql_query($query);
+    if($result) {
+      $row = mysql_fetch_array($result);
+      echo '<table><tr><td><font size="4">You successfully updated the record for ' . $row[FNAME] . ' ' . $row[LNAME] . '.</font><br>To update another person, select them from the list below:<br><br></td></tr></table>';
+    }
+  }
+
+  
+  echo '<p>Who do you want to update?';
+  echo '<select name="searchFor">';
+  $query = 'SELECT * FROM ' . $ktable . ' ORDER BY LODGE, NICKNAME';
+  $result = mysql_query($query);
+  if($result) {
+    echo '<option value="BLANK"> ---Select--- </option>';
+    while($row = mysql_fetch_array($result)) {
+      if($row[DATE_WITHDREW] == '0000-00-00') {
+        if($row[NICKNAME] == "") {
+          echo '<option value="' . $row[RECORD_NUM] . '">' . $row[FNAME] . ' ' . $row[LNAME] . '</option>';
+        }
+        else {
+          echo '<option value="' . $row[RECORD_NUM] . '">' . $row[NICKNAME] . '</option>';  
+        }
+      }
+    }
+  }
+  echo '</select></p><p><input type="submit" value="Find Individual!"></p>';
+  echo '</form>';
+  mysql_close();
+?> 
+
+<---------- Update DB Individual Form --------------->
+
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $usertable='knight_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+
+  echo '<form action="updateknight.php" method="post">';
+  if(isset($_GET["searchFor"])) {
+    $query = 'SELECT * FROM ' .  $usertable . ' WHERE RECORD_NUM = ' . $_GET['searchFor'];
+    $result = mysql_query($query);
+    if($result) {
+      $row = mysql_fetch_array($result);
+      echo '<form action="updateknight.php" method="post">';
+      echo 'TKMC Record Number: <input type="text" name="tkmcNum" value="' . $row[TKMC_NUM] . '" /><br>';
+      echo 'First Name: <input type="text" name="firstName" value="' . $row[FNAME] . '" /><br>';
+      echo 'Last Name: <input type="text" name="lastName" value="' . $row[LNAME] . '" /><br>';
+      echo 'Birth Date (yyyy-mm-dd): <input type="text" name="birthDate" value="' . $row[BIRTH_DATE] . '" /><br>';
+      echo 'Nickname: <input type="text" name="nickName" value="' . $row[NICKNAME] . '" /><br>';
+      
+      echo '<p>Rank:';
+      echo '<select name="rank">';
+      $rankquery = "SHOW COLUMNS FROM " . $usertable . " LIKE 'RANK'";
+      $rankresult = mysql_query($rankquery);
+      if($rankresult) {
+        $rankrow = mysql_fetch_array($rankresult);
+        #Extract the values
+        #The values are enclosed in single quotes and seperated by commas
+        $regex = "/'(.*?)'/";
+        preg_match_all($regex, $rankrow[1], $enum_array);
+        $i = 0;
+        foreach($enum_array[1] as $value) {
+          if($value == $row[RANK]) {
+            echo '<option selected="yes" value="' . $i . '">' . $value . '</option>';
+          }
+          else {
+            echo '<option value="' . $i . '">' . $value . '</option>';
+          }
+          $i++;
+        }
+      }
+      echo '</select>';
+      echo '</p>';
+      echo 'Street Address: <input type="text" name="streetAddress" value="' . $row[STREET_ADDRESS] . '" /><br>';
+      echo 'City: <input type="text" name="city" value="' . $row[CITY] . '" /><br>';
+      echo '<p>State:';
+      echo '<select name="state">';
+      $usertable='state_directory';
+      $query = 'SELECT * FROM ' . $usertable;
+      $stateresult = mysql_query($query);
+        if($stateresult) {
+          while($staterow = mysql_fetch_array($stateresult)){
+            if($staterow[STATE_NUM] == $row[STATE]) {
+              echo '<option selected="yes" value="' . $staterow[STATE_NUM] . '">' . $staterow[STATE_NAME] . '</option>';
+            }
+            else {
+              echo '<option value="' . $staterow[STATE_NUM] . '">' . $staterow[STATE_NAME] . '</option>';
+            }
+          }
+        }
+      echo '</select></p>';
+      echo 'Zip Code: <input type="text" name="zipCode" value="' . $row[ZIP_CODE] . '" /><br>';
+      echo '<p>Country:';
+      echo '<select name="country">';
+      $usertable='country_directory';
+      $query = 'SELECT * FROM ' . $usertable;
+      $countryresult = mysql_query($query);
+      if($countryresult) {
+        while($countryrow = mysql_fetch_array($countryresult)){
+          if($countryrow[COUNTRY_NUM] == $row[COUNTRY]) {
+            echo '<option selected="yes" value="' . $countryrow[COUNTRY_NUM] . '">' . $countryrow[COUNTRY_NAME] . '</option>';
+          }
+          else {
+            echo '<option value="' . $countryrow[COUNTRY_NUM] . '">' . $countryrow[COUNTRY_NAME] . '</option>';
+          }
+        }
+      }
+      echo '</select></p>';
+      echo 'Phone (no dashes): <input type="text" name="phoneNum" value="' . $row[PHONE] . '" /><br>';
+      echo 'Email Address: <input type="text" name="emailAddr" value="' . $row[EMAIL] . '" /><br>';
+      echo '<p>Lodge:';
+      echo '<select name="lodgeNum">';
+      $usertable='lodge_directory';
+      $query = 'SELECT * FROM ' . $usertable;
+      $lodgeresult = mysql_query($query);
+      if($lodgeresult) {
+        while($lodgerow = mysql_fetch_array($lodgeresult)){
+          if($lodgerow[LODGE_NUM] == $row[LODGE]) {
+            echo '<option selected="yes" value="' . $lodgerow[LODGE_NUM] . '">' . $lodgerow[LODGE_NAME] . '</option>';
+          }
+          else {
+            echo '<option value="' . $lodgerow[LODGE_NUM] . '">' . $lodgerow[LODGE_NAME] . '</option>';
+          }
+        }
+      }
+      echo '</select></p>';
+      echo 'Referred by (use nickname if posible): <input type="text" name="referredBy" value="' . $row[REFERRED_BY] . '"/><br>';
+      echo '<p>Mentor:';
+      echo '<select name="mentor">';
+      echo '<option value="">--- Select ---</option>';
+      $usertable='knight_directory';
+      $query = 'SELECT * FROM ' . $usertable . ' ORDER BY LODGE, NICKNAME';
+      $mentorresult = mysql_query($query);
+      if($mentorresult) {
+        while($mentorrow = mysql_fetch_array($mentorresult)) {
+          if($mentorrow[NICKNAME] == "") {
+            if($mentorrow[RECORD_NUM] == $row[MENTOR]) {
+              echo '<option selected="yes" value="' . $mentorrow[RECORD_NUM] . '">' . $mentorrow[FNAME] . ' ' . $mentorrow[LNAME] . '</option>';
+            }
+            else {
+              echo '<option value="' . $mentorrow[RECORD_NUM] . '">' . $mentorrow[FNAME] . ' ' . $mentorrow[LNAME] . '</option>';
+            }
+          }
+          else {
+            if($mentorrow[RECORD_NUM] == $row[MENTOR]) {
+              echo '<option selected="yes" value="' . $mentorrow[RECORD_NUM] . '">' . $mentorrow[NICKNAME] . '</option>';
+            }
+            else {
+              echo '<option value="' . $mentorrow[RECORD_NUM] . '">' . $mentorrow[NICKNAME] . '</option>';
+            }
+          }
+        }
+      }
+      echo '</select></p>';
+      echo '<b>Please enter all Dates in the format of yyyy-mm-dd </b><br>';
+      echo 'Date Applied: <input type="text" name="dateApplied" value="' . $row[DATE_JOINED] . '" /><br>';
+      echo 'Date Approved: <input type="text" name="dateApproved" value="' . $row[DATE_APPROVED] . '" /><br>';
+      echo 'Date Knighted: <input type="text" name="dateKnighted" value="' . $row[DATE_KNIGHTED] . '" /><br>';
+      echo 'Date WITHDREW: <input type="text" name="dateWithdrew" value="' . $row[DATE_WITHDREW] . '" /><br>';
+      echo '<input type="hidden" name="recordNum" value="' . $row[RECORD_NUM] . '" /><br>';
+      echo '<p><input type="submit" value="Update Record"></p>';
+    }
+  }
+  echo '</form>';
+  mysql_close();
+?> 
+
+
+<---------- Member Area Login Page --------------->
+
+<------ Register Button ----------------->
+<form action="http://templarknightsmc.com/memberlogin.htm" method="get">
+<input type="hidden" name="register" value="1" />
+<p><input type="submit" value="Register for Member Area"></p>
+</form>
+
+<------ Request Button ----------------->
+<form action="http://templarknightsmc.com/memberlogin.htm" method="get">
+<input type="hidden" name="request" value="1" />
+<p><input type="submit" value="Request Password"></p>
+</form>
+
+<------ Register/Request Form ----------------->
+
+<?php
+  echo '<form action="/memberservices/registerknight.php" method="post">';
+  if(isset($_GET["register"])) {
+    echo 'UserID : <input type="text" size="30" name="userId" /><br>';
+    echo 'eMail Address (This is used for verification): <input type="text" size="30" name="emailAddr" /><br>';
+    echo 'Password: <input type="password" size="30" name="password" /><br>';
+    echo 'Retype Password: <input type="password" size="30" name="password2" /><br>';
+    echo '<input type="hidden" name="isRegister" value="1" /><br>'; 
+    echo '<p><input type="submit" value="Register"></p>';
+  }
+  if(isset($_GET["request"])) {
+    echo 'eMail Address (This is used to verify you are a member): <br><input type="text" size="30" name="emailAddr" /><br>';
+    echo '<input type="hidden" name="isRegister" value="0" /><br>'; 
+    echo '<p><input type="submit" value="Request Password"></p>';
+  }
+
+  echo '<input type="hidden" name="hiddenField" value="Try to find THIS!!"></p>';
+  echo '</form>';
+?> 
+
+<------ GuestBook Form ----------------->
+
+<form action="signgbook.php" method="post">
+<?php
+  $extrastuff = '<table><tr><td>' . $_GET["retry"] . $_GET["success"] . '</td></tr></table>';
+  if(isset($_GET["retry"])) {
+    if($_GET["retry"] == "1") {
+      echo 'Please fill in all required fields.<br>';
+    }
+    if($_GET["retry"] == "2") {
+      echo 'You provided an invalid security code.<br>';
+    }
+    if($_GET["retry"] == "3") {
+      echo 'You provided an invalid email address.<br>';
+    }
+    if($_GET["retry"] == "4") {
+      echo 'You did not get the color of the cross correct.<br>';
+    }
+  }
+  if(isset($_GET["success"])) {
+    echo 'Thank you for your message!<br>';
+  }
+  echo 'Name<font color="red" size="2">*</font>:&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" size="30" name="guestName" /><br>';
+  echo 'eMail<font size="2">*</font>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" size="30" name="emailAddr" /><br>';
+  echo 'Subject<font color="red" size="2">*</font>:&nbsp;&nbsp;<input type="text" size="30" name="subject" /><br>';
+  echo '<p>Message<font color="red" size="2">*</font>: <br>';
+  echo '<textarea name="message" rows="10" cols="40"></textarea></p>';
+  echo 'The Templar Cross is red, yellow or green&nbsp;<input type="text" size="5" name="message2" /><br>';
+?>
+
+<img src="CaptchaSecurityImages.php?widtch=100&height=40&characters=5" /><br />
+Security Code: <input type="text" id="security_code" name="security_code" /><br />
+<p><input type="submit" name="submit" value="Submit"></p>
+</form>
+
+<------ Add Customer Form ----------------->
+
+<table><tr><form action="addcustomer.php" method="post">
+<td>Customer Name:&nbsp</td><td><input type="text" size="50" name="custName" /><br></td></tr>
+<tr><td>Street Address:</td><td><input type="text" name="streetAddress" /><br></td></tr>
+<tr><td>City:</td><td><input type="text" name="city" /><br></td></tr>
+<tr><td>State:</td><td>
+<select name="state">
+<?php
+  $hostname='tkmcgrandlodge.db.3516407.hostedresource.com';
+  $username='TKMCREAD';
+  $password='Templar13';
+  $dbname='tkmcgrandlodge';
+  $usertable='state_directory';
+  mysql_connect($hostname,$username, $password) OR DIE ('Unable to connect to database! Please try again later.');
+  mysql_select_db($dbname);
+
+  $query = 'SELECT * FROM ' . $usertable;
+  $stateresult = mysql_query($query);
+  if($stateresult) {
+    while($staterow = mysql_fetch_array($stateresult)){
+      echo '<option value="' . $staterow[STATE_NUM] . '">' . $staterow[STATE_NAME] . '</option>';
+    }
+  }
+?>
+</select></td></tr>
+<tr><td>Zip Code:</td><td><input type="text" name="zipCode" /><br></td></tr>
+<tr><td>Country:</td><td>
+<select name="country">
+<?php
+  $usertable='country_directory';
+  $query = 'SELECT * FROM ' . $usertable;
+  $countryresult = mysql_query($query);
+  if($countryresult) {
+    while($countryrow = mysql_fetch_array($countryresult)){
+      echo '<option value="' . $countryrow[COUNTRY_NUM] . '">' . $countryrow[COUNTRY_NAME] . '</option>';
+    }
+  }
+  mysql_close();
+?>
+</select></td></tr>
+<tr><td>Phone (no dashes):&nbsp</td><td><input type="text" name="phoneNum" /><br></td></tr>
+<tr><td>Contact Name:</td><td><input type="text" size="50" name="contactName" /><br></td></tr>
+<tr><td>Email Address:</td><td><input type="text" name="emailAddr" /><br></td></tr>
+<tr><td>Website:</td><td><input type="text" size="60" name="websiteUrl" /><br></td></tr></table>
+<p>Notes:<br>
+<textarea name="notes" rows="10" cols="40"></textarea></p>
+<p><input type="submit" value="Create Customer"></p>
+</form>
+
+<------ Ledger Form ----------------->
+

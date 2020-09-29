@@ -1,0 +1,102 @@
+Create Page to Register/Reset Password
+Form for UserName Email Password 
+Create password db
+Create Cookie
+
+?? When a user has submitted the authentication credentials, entries are made in PHP's super global $_SERVER array. These entries are PHP_AUTH_USER and PHP_AUTH_PW. They are also included with each subseqent request. 
+
+<?php
+// Password to be encrypted for a .htpasswd file
+$clearTextPassword = 'some password';
+
+// Encrypt password
+$password = crypt($clearTextPassword, base64_encode($clearTextPassword));
+
+// Print encrypted password
+echo $password;
+?>
+
+- - Start Script Here - -
+<?php
+$filename = "your htpasswd file path goes here";  // your htpasswd file name - complete unix path - or relative to this script
+$host="host";     // database host address
+$dbuser="user";                    // database user name
+$dbpswd="password";             // database password
+$mysqldb="db_name";             // name of database
+$table="passwd_table";          // name of table
+// modify the above lines for your environment
+mysql_connect("$host", "$dbuser", "$dbpswd");
+mysql_select_db ("$mysqldb");
+$query = mysql_query("SELECT * FROM $table");
+while ($row = mysql_fetch_array($query)) {
+  $user = $row['user'];
+  $pass = $row['password'];
+  $encrypted = crypt($pass);
+  $record .= "$user:$encrypted\r\n";
+}
+file_put_contents($filename,$record);
+?> 
+
+function delUser($username) {
+ 
+$fileName = file('members/password/.htpasswd');
+$pattern = "/". $username."/";
+ 
+foreach ($fileName as $key => $value) {
+ 
+if(preg_match($pattern, $value)) { $line = $key; }
+}
+ 
+ 
+unset($fileName[$line]);
+ 
+if (!$fp = fopen('members/password/.htpasswd', 'w+'))
+{
+ 
+print "Cannot open file ($fileName)";
+ 
+exit;
+}
+ 
+ 
+if($fp)
+{
+ 
+foreach($fileName as $line) { fwrite($fp,$line); }
+ 
+fclose($fp);
+}
+ 
+}
+
+function regUser() {
+ 
+ 
+ 
+ 
+$filename = 'members/password/.htpasswd';
+$data = $_POST['username'].":".htpasswd($_POST['password'])."\n";
+if (is_writable($filename)) {
+ 
+ 
+if (!$handle = fopen($filename, 'a')) {
+echo "Cannot open file ($filename)";
+exit;
+}
+ 
+ 
+if (fwrite($handle, $data) === FALSE) {
+echo "Cannot write to file ($filename)";
+exit;
+}
+ 
+// echo "Success, wrote ($data) to file ($filename)";
+ 
+fclose($handle);
+ 
+} else {
+ 
+echo "The file $filename is not writable";
+}
+ 
+}

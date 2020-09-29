@@ -1,0 +1,88 @@
+<?php
+/**
+ * Database.class
+ *
+ * Functions for accessing and returning database objects 
+ * @author: Hollywood
+ * @date: 26 Jan 2013
+ * @updated: 12 Aug 2014 for BlueHost move.
+ * @Updated: 04 Nov 2018 move to sqli
+ */
+ 
+class Database {
+	protected $hostName;
+	protected $userName;
+	protected $password;
+	protected $dbName;
+	public $connection;
+	
+	public function __construct($_host, $_db) {
+		$this->hostName = $_host;
+		$this->dbName = $_db;
+	}
+	
+	protected function setUserName($_user) {
+		$this->userName = $_user;
+	}
+	
+	protected function setPassword($_pass) {
+		$this->password = $_pass;
+	}
+}
+
+/**
+ * LocalDatabase class
+ */
+class LocalDatabase extends Database {
+	
+	public function __construct($id) {
+		parent::__construct(
+			'localhost',
+			'templark_'.$id);
+	}
+	
+	/**
+	 * Gets a Read-Only database connection
+	 */
+	public static function getReadable($id) {
+		$db = new LocalDatabase($id);
+		$db->setUserName('templark_ro');
+		$db->setPassword('Templar13');
+		$db->connection = mysqli_connect($db->hostName, $db->userName, $db->password);
+		if (!$db->connection) {
+			die('Unable to connect to the host!  Please try again later. Error: ' . mysqli_error());
+		}
+		$db_selected = mysqli_select_db($db->connection, $db->dbName);
+		if (!$db_selected) {
+			die('Unable to select the database!  Error: ' . mysqli_error());
+		}
+		return $db;
+	}
+
+	/**
+	 * Gets a Writable database connection
+	 */
+	public static function getWritable($id) {
+		$db = new LocalDatabase($id);
+		$db->setUserName('templark_rw');
+		$db->setPassword('Deamon66!');
+		$db->connection = mysqli_connect($db->hostName, $db->userName, $db->password);
+		if (!$db->connection) {
+			die('Unable to connect to the host!  Please try again later. Error: ' . mysqli_error());
+		}
+		$db_selected = mysqli_select_db($db->connection, $db->dbName);
+		if (!$db_selected) {
+			die('Unable to select the database!  Error: ' . mysqli_error());
+		}
+		return $db;
+	}
+	
+	/**
+	 * Cleans an entry for quotes
+	 */
+	public static function cleanentry($ostring) {
+		$mstring = str_replace('"', '\"', $ostring);
+		$mstring = str_replace("'", "\'", $mstring);
+		return $mstring;
+	}
+}

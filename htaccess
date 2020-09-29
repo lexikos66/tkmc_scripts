@@ -1,0 +1,5 @@
+AuthType Basic
+AuthName "Members Area"
+AuthUserFile /home/content/d/e/n/dennispower/html/memberservices/.htpasswd
+Require valid-user
+Options -Indexes
